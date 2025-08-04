@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Countdown Timer</title>
+    <style>
+      :root {
+        --primary: #7c3aed;
+        --bg-light: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
+        --bg-dark: linear-gradient(135deg, #18181b 0%, #312e81 100%);
+        --text-light: #18181b;
+        --text-dark: #f8fafc;
+        --card-light: rgba(255, 255, 255, 0.85);
+        --card-dark: rgba(35, 35, 42, 0.85);
+        --accent: #fbbf24;
+        --flip-bg: #ede9fe;
+        --flip-bg-dark: #312e81;
+        --flip-shadow: 0 4px 24px rgba(124, 58, 237, 0.1);
+        --radius: 1.8em;
+        --transition: 0.3s cubic-bezier(0.4, 2, 0.6, 1);
+        --glass-blur: blur(8px);
+        --label-color: #6366f1;
+        --label-dark: #a5b4fc;
+        --finished-light: #10b981;
+        --finished-dark: #34d399;
+      }
+      html {
+        box-sizing: border-box;
+        font-size: 16px;
+      }
+      *,
+      *:before,
+      *:after {
+        box-sizing: inherit;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: system-ui, sans-serif;
+        background: var(--bg-light);
+        color: var(--text-light);
+        transition: background var(--transition), color var(--transition);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 0;
+      }
+      body.dark {
+        background: var(--bg-dark);
+        color: var(--text-dark);
+      }
+      header {
+        width: 100%;
+        max-width: 600px;
+        margin: 2em auto 1em auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1em;
+      }
+      .title {
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: -1px;
+        flex: 1;
+        color: var(--primary);
+        text-shadow: 0 2px 8px rgba(124, 58, 237, 0.08);
+      }
+      .controls {
+        display: flex;
+        gap: 0.5em;
+        align-items: center;
+      }
+      .toggle-btn,
+      .select {
+        background: var(--card-light);
+        color: var(--primary);
+        border: none;
+        border-radius: var(--radius);
+        padding: 0.5em 1em;
+        font-size: 1em;
+        cursor: pointer;
+        box-shadow: var(--flip-shadow);
+        transition: background var(--transition), color var(--transition),
+          box-shadow var(--transition);
+        backdrop-filter: var(--glass-blur);
+        outline: none;
+      }
+      .toggle-btn:hover,
+      .select:hover,
+      .toggle-btn:focus,
+      .select:focus {
+        background: #ede9fe;
+        color: #5b21b6;
+        box-shadow: 0 2px 12px rgba(124, 58, 237, 0.18);
+      }
+      body.dark .toggle-btn,
+      body.dark .select {
+        background: var(--card-dark);
+        color: var(--accent);
+      }
+      body.dark .toggle-btn:hover,
+      body.dark .select:hover,
+      body.dark .toggle-btn:focus,
+      body.dark .select:focus {
+        background: #312e81;
+        color: #fbbf24;
+        box-shadow: 0 2px 12px rgba(59, 130, 246, 0.18);
+      }
+      .select {
+        padding: 0.4em 0.8em;
+      }
+      main {
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+      }
+      .countdown {
+        display: flex;
+        gap: 1em;
+        margin: 2em 0 1em 0;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .time-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 70px;
+      }
+      .label {
+        margin-top: 0.5em;
+        font-size: 1em;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        color: var(--label-color);
+        opacity: 0.85;
+        text-shadow: 0 1px 4px rgba(124, 58, 237, 0.08);
+        transition: color var(--transition);
+      }
+      body.dark .label {
+        color: var(--label-dark);
+      }
+      .flip-card {
+        position: relative;
+        width: 70px;
+        height: 90px;
+        perspective: 400px;
+        margin: 0 auto;
+        user-select: none;
+        filter: drop-shadow(0 4px 16px rgba(124, 58, 237, 0.1));
+      }
+      .flip-card .top,
+      .flip-card .bottom,
+      .flip-card .flip-top,
+      .flip-card .flip-bottom {
+        position: absolute;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: 50%;
+        background: var(--flip-bg);
+        color: var(--primary);
+        font-size: 2.5em;
+        font-weight: 700;
+        line-height: 1.2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius) var(--radius) 0 0;
+        box-shadow: var(--flip-shadow);
+        overflow: hidden;
+        backface-visibility: hidden;
+        transition: background var(--transition), color var(--transition);
+        border: 1.5px solid #c7d2fe;
+        background-image: linear-gradient(135deg, #ede9fe 60%, #c7d2fe 100%);
+      }
+      .flip-card .bottom,
+      .flip-card .flip-bottom {
+        top: 50%;
+        border-radius: 0 0 var(--radius) var(--radius);
+        border-top: 1.5px solid #c7d2fe;
+        background-image: linear-gradient(135deg, #c7d2fe 0%, #ede9fe 100%);
+      }
+      .flip-card .top,
+      .flip-card .flip-top {
+        top: 0;
+        border-bottom: 1.5px solid #c7d2fe;
+      }
+      body.dark .flip-card .top,
+      body.dark .flip-card .bottom,
+      body.dark .flip-card .flip-top,
+      body.dark .flip-card .flip-bottom {
+        background: var(--flip-bg-dark);
+        color: var(--accent);
+        border-color: #4338ca;
+        background-image: linear-gradient(135deg, #312e81 60%, #4338ca 100%);
+      }
+      body.dark .flip-card .bottom,
+      body.dark .flip-card .flip-bottom {
+        background-image: linear-gradient(135deg, #4338ca 0%, #312e81 100%);
+      }
+      .flip-card .flip-top,
+      .flip-card .flip-bottom {
+        z-index: 2;
+        animation-duration: 0.6s;
+        animation-timing-function: cubic-bezier(0.4, 2, 0.6, 1);
+        animation-fill-mode: forwards;
+      }
+      .flip-card .flip-top {
+        transform-origin: bottom;
+        animation-name: flipTop;
+      }
+      .flip-card .flip-bottom {
+        transform-origin: top;
+        animation-name: flipBottom;
+      }
+      @keyframes flipTop {
+        0% {
+          transform: rotateX(0deg);
+        }
+        100% {
+          transform: rotateX(-90deg);
+        }
+      }
+      @keyframes flipBottom {
+        0% {
+          transform: rotateX(90deg);
+        }
+        100% {
+          transform: rotateX(0deg);
+        }
+      }
+      .finished-message {
+        font-size: 1.5em;
+        font-weight: 700;
+        color: var(--finished-light);
+        margin: 2em 0 1em 0;
+        text-align: center;
+        letter-spacing: 0.5px;
+        opacity: 0;
+        animation: fadeIn 1s 0.2s forwards;
+        text-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
+        transition: color var(--transition);
+      }
+      body.dark .finished-message {
+        color: var(--finished-dark);
+        text-shadow: 0 2px 8px rgba(52, 211, 153, 0.1);
+      }
+      @keyframes fadeIn {
+        to {
+          opacity: 1;
+        }
+      }
+      .config-panel {
+        margin: 1.5em 0 0 0;
+        padding: 1em 1.5em;
+        background: var(--card-light);
+        border-radius: var(--radius);
+        box-shadow: var(--flip-shadow);
+        display: flex;
+        flex-direction: column;
+        gap: 1em;
+        max-width: 400px;
+        width: 100%;
+        transition: background var(--transition), color var(--transition);
+        backdrop-filter: var(--glass-blur);
+        border: 1.5px solid #c7d2fe;
+      }
+      body.dark .config-panel {
+        background: var(--card-dark);
+        color: var(--text-dark);
+        border-color: #4338ca;
+      }
+      .config-panel label {
+        font-size: 1em;
+        font-weight: 500;
+        margin-bottom: 0.2em;
+        color: var(--primary);
+        transition: color var(--transition);
+      }
+      body.dark .config-panel label {
+        color: var(--accent);
+      }
+      .config-panel input[type="datetime-local"],
+      .config-panel input[type="text"] {
+        width: 100%;
+        padding: 0.5em;
+        border-radius: var(--radius);
+        border: 1.5px solid #c7d2fe;
+        font-size: 1em;
+        background: rgba(255, 255, 255, 0.7);
+        color: var(--primary);
+        transition: background var(--transition), color var(--transition),
+          border-color var(--transition);
+        outline: none;
+      }
+      .config-panel input[type="datetime-local"]:focus,
+      .config-panel input[type="text"]:focus {
+        border-color: var(--primary);
+        background: #ede9fe;
+        color: #5b21b6;
+      }
+      body.dark .config-panel input[type="datetime-local"],
+      body.dark .config-panel input[type="text"] {
+        background: rgba(49, 46, 129, 0.7);
+        color: var(--accent);
+        border-color: #4338ca;
+      }
+      body.dark .config-panel input[type="datetime-local"]:focus,
+      body.dark .config-panel input[type="text"]:focus {
+        border-color: var(--accent);
+        background: #312e81;
+        color: #fbbf24;
+      }
+      .config-panel .row {
+        display: flex;
+        align-items: center;
+        gap: 1em;
+        flex-wrap: wrap;
+      }
+      .config-panel .row > * {
+        flex: 1;
+        min-width: 120px;
+      }
+      .config-panel input[type="checkbox"] {
+        accent-color: var(--primary);
+        width: 1.2em;
+        height: 1.2em;
+      }
+      .config-panel .desc {
+        font-size: 0.95em;
+        opacity: 0.7;
+        margin-top: -0.5em;
+        margin-bottom: 0.5em;
+        color: var(--primary);
+        transition: color var(--transition);
+      }
+      body.dark .config-panel .desc {
+        color: var(--accent);
+      }
+      @media (max-width: 700px) {
+        .countdown {
+          gap: 0.5em;
+        }
+        .flip-card {
+          width: 50px;
+          height: 65px;
+        }
+        .time-section {
+          min-width: 50px;
+        }
+      }
+      @media (max-width: 500px) {
+        .title {
+          font-size: 1.2rem;
+        }
+        .flip-card {
+          width: 38px;
+          height: 48px;
+        }
+        .time-section {
+          min-width: 38px;
+        }
+        .config-panel {
+          padding: 0.7em 0.5em;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="title">Countdown Timer</div>
+      <div class="controls">
+        <button
+          class="toggle-btn"
+          id="theme-toggle"
+          title="Toggle Light/Dark Mode"
+          aria-label="Toggle Light/Dark Mode"
+        >
+          🌙
+        </button>
+        <select class="select" id="lang-select" title="Language">
+          <option value="en">English</option>
+          <option value="es">Español</option>
+          <option value="fr">Français</option>
+          <option value="de">Deutsch</option>
+          <option value="zh">中文</option>
+        </select>
+        <select class="select" id="format-select" title="Time Format">
+          <option value="24">24h</option>
+          <option value="12">12h</option>
+        </select>
+      </div>
+    </header>
+    <main>
+      <div class="countdown" id="countdown">
+        <!-- Timer sections will be injected here -->
+      </div>
+      <div class="finished-message" id="finished-message" style="display: none">
+        Countdown Finished
+      </div>
+      <form class="config-panel" id="config-form" autocomplete="off">
+        <label for="target-date">Target Date & Time</label>
+        <input
+          type="datetime-local"
+          id="target-date"
+          name="target-date"
+          required
+        />
+        <div class="desc" id="date-desc"></div>
+        <div class="row">
+          <label
+            ><input type="checkbox" id="auto-redirect" /> Auto Redirect</label
+          >
+          <label
+            ><input type="checkbox" id="sound-effect" /> Sound on Finish</label
+          >
+        </div>
+        <div class="row">
+          <label for="redirect-url">Redirect URL</label>
+          <input
+            type="text"
+            id="redirect-url"
+            name="redirect-url"
+            placeholder="https://example.com"
+          />
+        </div>
+        <button type="submit" class="toggle-btn" style="margin-top: 0.5em">
+          Update Countdown
+        </button>
+      </form>
+    </main>
+    <script>
+      // ====== CONFIGURATION ======
+      const DEFAULT_CONFIG = {
+        targetDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
+        autoRedirect: false,
+        soundEffect: false,
+        redirectUrl: "",
+        lang: "en",
+        timeFormat: "24",
+        theme: "light",
+      };
+      // ====== LOCALIZATION ======
+      const LABELS = {
+        en: ["Days", "Hours", "Minutes", "Seconds", "Countdown Finished"],
+        es: ["Días", "Horas", "Minutos", "Segundos", "Cuenta finalizada"],
+        fr: ["Jours", "Heures", "Minutes", "Secondes", "Compte terminé"],
+        de: ["Tage", "Stunden", "Minuten", "Sekunden", "Countdown beendet"],
+        zh: ["天", "小时", "分钟", "秒", "倒计时结束"],
+      };
+      // ====== STATE ======
+      let config = { ...DEFAULT_CONFIG };
+      let timerInterval = null;
+      let lastTime = { days: null, hours: null, minutes: null, seconds: null };
+      let finished = false;
+      // ====== DOM ELEMENTS ======
+      const countdownEl = document.getElementById("countdown");
+      const finishedMsgEl = document.getElementById("finished-message");
+      const themeToggleBtn = document.getElementById("theme-toggle");
+      const langSelect = document.getElementById("lang-select");
+      const formatSelect = document.getElementById("format-select");
+      const configForm = document.getElementById("config-form");
+      const targetDateInput = document.getElementById("target-date");
+      const autoRedirectInput = document.getElementById("auto-redirect");
+      const soundEffectInput = document.getElementById("sound-effect");
+      const redirectUrlInput = document.getElementById("redirect-url");
+      const dateDesc = document.getElementById("date-desc");
+      // ====== UTILS ======
+      function pad(n) {
+        return n < 10 ? "0" + n : "" + n;
+      }
+      function getTimeParts(diff) {
+        let t = Math.max(0, diff);
+        const days = Math.floor(t / (24 * 60 * 60 * 1000));
+        t -= days * 24 * 60 * 60 * 1000;
+        const hours = Math.floor(t / (60 * 60 * 1000));
+        t -= hours * 60 * 60 * 1000;
+        const minutes = Math.floor(t / (60 * 1000));
+        t -= minutes * 60 * 1000;
+        const seconds = Math.floor(t / 1000);
+        return { days, hours, minutes, seconds };
+      }
+      function saveConfig() {
+        localStorage.setItem("countdown_config", JSON.stringify(config));
+      }
+      function loadConfig() {
+        const saved = localStorage.getItem("countdown_config");
+        if (saved) {
+          try {
+            const obj = JSON.parse(saved);
+            if (obj.targetDate) obj.targetDate = new Date(obj.targetDate);
+            return { ...DEFAULT_CONFIG, ...obj };
+          } catch {}
+        }
+        return { ...DEFAULT_CONFIG };
+      }
+      function saveTheme(theme) {
+        localStorage.setItem("countdown_theme", theme);
+      }
+      function loadTheme() {
+        return localStorage.getItem("countdown_theme") || DEFAULT_CONFIG.theme;
+      }
+      function playSound() {
+        // Simple beep using Web Audio API
+        try {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.type = "triangle";
+          o.frequency.value = 880;
+          g.gain.value = 0.1;
+          o.connect(g).connect(ctx.destination);
+          o.start();
+          setTimeout(() => {
+            o.stop();
+            ctx.close();
+          }, 350);
+        } catch {}
+      }
+      function getLocale() {
+        switch (config.lang) {
+          case "es":
+            return "es-ES";
+          case "fr":
+            return "fr-FR";
+          case "de":
+            return "de-DE";
+          case "zh":
+            return "zh-CN";
+          default:
+            return "en-US";
+        }
+      }
+      function formatDate(dt) {
+        const opts = {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: config.timeFormat === "12",
+        };
+        return dt.toLocaleString(getLocale(), opts);
+      }
+      // ====== FLIP ANIMATION ======
+      function createFlipCard(value, prevValue) {
+        // value and prevValue are strings (e.g. '09')
+        return `
+        <div class="flip-card" data-value="${value}">
+          <div class="top">${prevValue}</div>
+          <div class="bottom">${prevValue}</div>
+        </div>
+      `;
+      }
+      function animateFlip(cardEl, newValue) {
+        const top = cardEl.querySelector(".top");
+        const bottom = cardEl.querySelector(".bottom");
+        const prevValue = top.textContent;
+        if (prevValue === newValue) return;
+        // Remove old flip if any
+        cardEl
+          .querySelectorAll(".flip-top, .flip-bottom")
+          .forEach((e) => e.remove());
+        // Create flip-top
+        const flipTop = document.createElement("div");
+        flipTop.className = "flip-top";
+        flipTop.textContent = prevValue;
+        // Create flip-bottom
+        const flipBottom = document.createElement("div");
+        flipBottom.className = "flip-bottom";
+        flipBottom.textContent = newValue;
+        // Insert
+        cardEl.appendChild(flipTop);
+        cardEl.appendChild(flipBottom);
+        // Animate
+        flipTop.addEventListener("animationend", () => {
+          top.textContent = newValue;
+          flipTop.remove();
+        });
+        flipBottom.addEventListener("animationend", () => {
+          bottom.textContent = newValue;
+          flipBottom.remove();
+        });
+      }
+      // ====== RENDERING ======
+      function renderCountdown(timeParts, initial = false) {
+        const labels = LABELS[config.lang] || LABELS["en"];
+        const sections = [
+          { key: "days", value: pad(timeParts.days), label: labels[0] },
+          { key: "hours", value: pad(timeParts.hours), label: labels[1] },
+          { key: "minutes", value: pad(timeParts.minutes), label: labels[2] },
+          { key: "seconds", value: pad(timeParts.seconds), label: labels[3] },
+        ];
+        if (initial) {
+          countdownEl.innerHTML = sections
+            .map(
+              (s) => `
+          <div class="time-section" data-key="${s.key}">
+            ${createFlipCard(s.value, s.value)}
+            <div class="label">${s.label}</div>
+          </div>
+        `
+            )
+            .join("");
+          lastTime = {
+            days: sections[0].value,
+            hours: sections[1].value,
+            minutes: sections[2].value,
+            seconds: sections[3].value,
+          };
+        } else {
+          sections.forEach((s) => {
+            const sec = countdownEl.querySelector(
+              `.time-section[data-key="${s.key}"]`
+            );
+            const card = sec.querySelector(".flip-card");
+            animateFlip(card, s.value);
+            sec.querySelector(".label").textContent = s.label;
+            lastTime[s.key] = s.value;
+          });
+        }
+      }
+      function showFinished() {
+        finishedMsgEl.textContent = (LABELS[config.lang] || LABELS["en"])[4];
+        finishedMsgEl.style.display = "";
+        setTimeout(() => (finishedMsgEl.style.opacity = 1), 10);
+      }
+      function hideFinished() {
+        finishedMsgEl.style.display = "none";
+        finishedMsgEl.style.opacity = 0;
+      }
+      // ====== TIMER LOGIC ======
+      function startTimer() {
+        if (timerInterval) clearInterval(timerInterval);
+        finished = false;
+        hideFinished();
+        function tick() {
+          const now = new Date();
+          const diff = config.targetDate - now;
+          if (diff <= 0) {
+            renderCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+            if (!finished) {
+              finished = true;
+              showFinished();
+              if (config.soundEffect) playSound();
+              if (config.autoRedirect && config.redirectUrl) {
+                setTimeout(() => {
+                  window.location.href = config.redirectUrl;
+                }, 1200);
+              }
+            }
+            return;
+          }
+          const timeParts = getTimeParts(diff);
+          renderCountdown(timeParts);
+        }
+        // Initial render
+        const diff = config.targetDate - new Date();
+        renderCountdown(getTimeParts(diff), true);
+        tick();
+        timerInterval = setInterval(tick, 1000);
+      }
+      // ====== THEME ======
+      function setTheme(theme) {
+        document.body.classList.toggle("dark", theme === "dark");
+        themeToggleBtn.textContent = theme === "dark" ? "☀️" : "🌙";
+        config.theme = theme;
+        saveTheme(theme);
+        saveConfig();
+      }
+      // ====== FORM HANDLING ======
+      function updateForm() {
+        // Set form values from config
+        targetDateInput.value = config.targetDate.toISOString().slice(0, 16);
+        autoRedirectInput.checked = !!config.autoRedirect;
+        soundEffectInput.checked = !!config.soundEffect;
+        redirectUrlInput.value = config.redirectUrl || "";
+        langSelect.value = config.lang;
+        formatSelect.value = config.timeFormat;
+        dateDesc.textContent = formatDate(config.targetDate);
+      }
+      configForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const newDate = new Date(targetDateInput.value);
+        if (isNaN(newDate.getTime()) || newDate <= new Date()) {
+          alert("Please select a valid future date and time.");
+          return;
+        }
+        config.targetDate = newDate;
+        config.autoRedirect = autoRedirectInput.checked;
+        config.soundEffect = soundEffectInput.checked;
+        config.redirectUrl = redirectUrlInput.value.trim();
+        saveConfig();
+        startTimer();
+        dateDesc.textContent = formatDate(config.targetDate);
+      });
+      targetDateInput.addEventListener("input", () => {
+        const newDate = new Date(targetDateInput.value);
+        if (!isNaN(newDate.getTime())) {
+          dateDesc.textContent = formatDate(newDate);
+        }
+      });
+      langSelect.addEventListener("change", () => {
+        config.lang = langSelect.value;
+        saveConfig();
+        updateForm();
+        startTimer();
+      });
+      formatSelect.addEventListener("change", () => {
+        config.timeFormat = formatSelect.value;
+        saveConfig();
+        updateForm();
+        startTimer();
+      });
+      themeToggleBtn.addEventListener("click", () => {
+        setTheme(config.theme === "dark" ? "light" : "dark");
+      });
+      // ====== INIT ======
+      function init() {
+        // Load config
+        config = loadConfig();
+        // Theme
+        setTheme(loadTheme());
+        // Form
+        updateForm();
+        // Timer
+        startTimer();
+      }
+      window.addEventListener("DOMContentLoaded", init);
+    </script>
+  </body>
+</html>
